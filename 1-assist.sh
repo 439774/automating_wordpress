@@ -1,3 +1,4 @@
+#!/bin/bash
 for i in ansible epel-release; do
   yum install $i -y
 done
