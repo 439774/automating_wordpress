@@ -22,9 +22,10 @@
       user:
         name: ansible
         generate_ssh_key: yes
+        ssh_key_file: .ssh/id_rsa
     - name: "Read a file content"
       shell: |
-        cat ~/.ssh/id_rsa/pub.pub
+        cat ~/.ssh/id_rsa.pub
       register: file_content
     - git_config:
         name: user.name
