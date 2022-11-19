@@ -1,7 +1,13 @@
 #!/bin/bash
-for i in ansible epel-release; do
-  yum install $i -y
-done
+yum install epel-release -y
+
+wait
+
+yum update -yam
+
+wait
+
+yum install ansible -y
 
 wait
 
