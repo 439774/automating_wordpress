@@ -13,22 +13,22 @@
         - git
         - vim
         - tree
-    - name: upgrade all packages
+    - name: upgrade all packages, excluding kernel & foo related packages
       yum:
         name: '*'
         state: latest
+        exclude: kernel*,foo*
     - name: Add the user 'ansible' with a bash shell, Generate SSH key for user 'ansible'
       user:
         name: ansible
-        shell: /bin/bash
         generate_ssh_key: yes
-        ssh_key_file: .ssh/id_rsa/pub
     - name: "Read a file content"
       shell: |
-        cat ~/.ssh/id_rsa.pub
+        cat ~/.ssh/id_rsa/pub.pub
       register: file_content
-    - name: setting config
-      command: git config user.name 439774
-    - name: setting config
-      command: git config user.email therealkimbladi@gmail.com
-
+    - git_config:
+        name: user.name
+        value: 439774
+    - git_config:
+        name: user.email
+        value: therealkimbladi@gmail.com
