@@ -22,14 +22,23 @@
           oauth_token: "{{ token }}"
           name: "ansible_user_ssh_pub_key"
           ssh_pub_key: "{{ output.stdout }}"
+          state: present
+        register: info
+
+      - debug:
+          msg: "{{ info.data.ssh_key.id }}"
 
       - name: create a new droplet
         digital_ocean_droplet:
           state: present
           name: webserver
           oauth_token: "{{ token }}"
+          ssh_keys: "{{ info.data.ssh_key.id }}"
           size: s-1vcpu-1gb
           region: nyc1
           image: centos-stream-8-x64
-          wait_timeout: 500
+          wait_timeout: 120
         register: my_droplet
+
+      - debug: 
+          msg: "{{ my_droplet.data.droplet.networks.v4 }}"
