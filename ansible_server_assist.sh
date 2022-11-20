@@ -3,7 +3,7 @@ yum install epel-release -y
 
 wait
 
-yum update -yam
+yum update -y
 
 wait
 
