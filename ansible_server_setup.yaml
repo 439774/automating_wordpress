@@ -1,5 +1,5 @@
 ---
-  - name: Setting up packages for wordpress(some extra just incase)
+  - name: Setting up ansible_server
     hosts: localhost
     connection: local
     tasks:
@@ -9,7 +9,16 @@
           shell: /bin/bash
           generate_ssh_key: yes
           ssh_key_file: ~/.ssh/playbook-ssh
-      - name: "Read a file content"
+
+      - name: "Read a file content and generate it on terminal"
         shell: "cat ~/.ssh/playbook-ssh.pub"
-        register: "output"
+        register: output
       - debug: var=output.stdout_lines
+
+      - name: "Create ssh key using the output"
+        digital_ocean_sshkey:
+          oauth_token: paste_your_token_here
+          name: "ansible_user_ssh_pub_key"
+          ssh_pub_key: "{{ output.stdout }}"
+          state: present
+        register: result
