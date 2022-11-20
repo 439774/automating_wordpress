@@ -2,6 +2,8 @@
   - name: Setting up ansible_server
     hosts: localhost
     connection: local
+    vars:
+      token: paste_token_here
     tasks:
       - name: Add the user 'ansible' with a bash shell, Generate SSH key for user 'ansible'
         user:
@@ -15,10 +17,8 @@
         register: output
       - debug: var=output.stdout_lines
 
-      - name: "Create ssh key using the output"
+      - name: "Create ssh key using the output of the script above"
         digital_ocean_sshkey:
-          oauth_token: paste_your_token_here
+          oauth_token: "{{ token }}"
           name: "ansible_user_ssh_pub_key"
           ssh_pub_key: "{{ output.stdout }}"
-          state: present
-        register: result
