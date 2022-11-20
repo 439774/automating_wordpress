@@ -1,2 +1,2 @@
 # automating_wordpress
-Dont_Touch_Folders_Its_Filled_With_trash
+Dont_Touch_Trash_Folder
