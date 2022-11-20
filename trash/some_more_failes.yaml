@@ -1,0 +1,46 @@
+---
+  - name: Setting up ansible_server
+    hosts: localhost
+    connection: local
+    vars:
+      token: paste_token_here
+    tasks:
+      - name: Add the user 'ansible' with a bash shell, Generate SSH key for user 'ansible'
+        user:
+          name: ansible
+          shell: /bin/bash
+          generate_ssh_key: yes
+          ssh_key_file: ~/.ssh/playbook-ssh
+
+      - name: "Read a file content and generate it on terminal"
+        shell: "cat ~/.ssh/playbook-ssh.pub"
+        register: output
+      - debug: var=output.stdout_lines
+
+      - name: "Create ssh key using the output of the script above"
+        digital_ocean_sshkey:
+          oauth_token: "{{ token }}"
+          name: "ansible_user_ssh_pub_key"
+          ssh_pub_key: "{{ output.stdout }}"
+      
+                state: present
+        register: result
+
+      - debug:
+          msg: "Your ssh-key id is {{ present.data.id }} thank you }}"
+
+      - name: create a new droplet
+        digital_ocean_droplet:
+          state: present
+          name: webserver
+          oauth_token: "{{ token }}"
+          ssh_keys: "{{ present.data.id }}"
+          size: 1gb
+          region: nyc1
+          image: centos-stream-8-x64
+          wait_timeout: 500
+        register: my_droplet
+
+      - debug:
+          msg: "ID is {{ my_droplet.data.droplet.id }}, IP is {{ my_droplet.data.ip_address }}"
+      
