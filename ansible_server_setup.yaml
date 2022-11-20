@@ -3,7 +3,9 @@
     hosts: localhost
     connection: local
     vars:
-      token: paste_token_here
+      - token: paste_token_here
+      - packages_yum: ["yum"]
+      - packages: ["vim", "tree", "curl", "wget", "git"]
     tasks:
       - name: Add the user 'ansible' with a bash shell, Generate SSH key for user 'ansible'
         user:
