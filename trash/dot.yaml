@@ -1,0 +1,6 @@
+      - name: Add the user 'ansible' with a bash shell, Generate SSH key for user 'ansible'
+        user:
+          name: ansible
+          shell: /bin/bash
+          generate_ssh_key: yes
+          ssh_key_file: ~/.ssh/playbook-ssh

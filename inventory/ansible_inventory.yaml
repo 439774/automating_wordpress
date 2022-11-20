@@ -1,0 +1,12 @@
+---
+  all: # all_target_servers
+    hosts:
+    children:
+      webserver: # group_name
+        hosts:
+          host1: # hostname
+            ansible_host: ip_addr_here
+      database: # group_name
+        hosts:
+          host2: # hostname
+            ansible_host: ip_addr_here
