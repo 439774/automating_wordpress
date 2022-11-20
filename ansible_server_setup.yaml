@@ -2,7 +2,7 @@
   - name: Setting up ansible_server
     hosts: localhost
     connection: local
-    vars:
+    vars:  #just incase
       - token: paste_token_here
       - packages_yum: ["yum"]
       - packages: ["vim", "tree", "curl", "wget", "git"]
