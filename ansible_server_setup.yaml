@@ -7,7 +7,7 @@
     vars:  #just incase
       token: paste_token_here
       ip_v4_pub: (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true)
-      ip_v4_private: (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address)
+      ip_v4_private: (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true)
       packages_yum: ["yum"]
       packages: ["vim", "tree", "curl", "wget", "git"]
     tasks:
