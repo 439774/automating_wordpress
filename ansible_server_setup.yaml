@@ -2,10 +2,14 @@
   - name: Setting up ansible_server
     hosts: localhost
     connection: local
+    become: yes
+    become_user: ansible
     vars:  #just incase
-      - token: paste_token_here
-      - packages_yum: ["yum"]
-      - packages: ["vim", "tree", "curl", "wget", "git"]
+      token: dop_v1_ee39097e08c25d0e76420b4a789ebc9c20f6b5e34bb22ff76fa31f1f13e45828
+      ip_v4_pub: (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true)
+      ip_v4_private: (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address)
+      packages_yum: ["yum"]
+      packages: ["vim", "tree", "curl", "wget", "git"]
     tasks:
       - name: Add the user 'ansible' with a bash shell, Generate SSH key for user 'ansible'
         user:
@@ -30,8 +34,8 @@
       - debug:
           msg: "{{ info.data.ssh_key.id }}"
 
-      - name: create a new droplet
-        digital_ocean_droplet:
+      - name: Create a new Droplet
+        community.digitalocean.digital_ocean_droplet:
           state: present
           name: webserver
           oauth_token: "{{ token }}"
@@ -39,8 +43,25 @@
           size: s-1vcpu-1gb
           region: nyc1
           image: centos-stream-8-x64
-          wait_timeout: 120
+          wait_timeout: 200
         register: my_droplet
 
-      - debug: 
-          msg: "{{ my_droplet.data.droplet.networks.v4 }}"
+      - name: printing 
+        ansible.builtin.debug: 
+          msg: |
+            Droplet ID is {{ my_droplet.data.droplet.id }}
+            First Public IPv4 is {{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address | default('<none>', true) }}
+            First Private IPv4 is {{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}
+
+      - shell: |
+          whoami
+          cd
+          pwd
+          mkdir app && touch app/dev_inventory.yaml
+          ls -l
+          cat app/dev_inventory.yaml
+        register: checkpoint
+      
+      - name: checking if things are running smoothly
+        ansible.builtin.debug: 
+          msg: "{{ checkpoint.stdout_lines }}"

@@ -1,0 +1,16 @@
+      - name: Inserting inventory inside "app/dev_inventory.yaml"
+        blockinfile:
+          path: app/dev_inventory.yaml
+          block: |
+            ---
+              all: # all_target_servers
+                hosts:
+                children:
+                  application: # group_name
+                    hosts:
+                      host1: # hostname
+                        ansible_host: "{{ ip_v4_pub }}"
+                  database: # group_name
+                    hosts:
+                      host2: # hostname
+                        ansible_host: ip_addr_here

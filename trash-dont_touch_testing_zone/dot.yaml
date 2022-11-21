@@ -1,0 +1,23 @@
+---
+  - name: Setting up ansible_server
+    hosts: localhost
+    connection: local
+    become: yes
+    become_user: ansible
+    tasks:
+      - shell: |
+          whoami
+          cd
+          pwd
+          mkdir app && touch app/dev_inventory.yaml
+          ls -l
+          cat app/dev_inventory.yaml
+        register: checkpoint
+      
+      - name: checking if things are running smoothly
+        ansible.builtin.debug: 
+          msg: "{{ checkpoint.stdout_lines }}"
+
+
+
+  
