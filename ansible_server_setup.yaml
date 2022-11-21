@@ -5,7 +5,7 @@
     become: yes
     become_user: ansible
     vars:  #just incase
-      token: dop_v1_ee39097e08c25d0e76420b4a789ebc9c20f6b5e34bb22ff76fa31f1f13e45828
+      token: paste_token_here
       ip_v4_pub: (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true)
       ip_v4_private: (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address)
       packages_yum: ["yum"]
