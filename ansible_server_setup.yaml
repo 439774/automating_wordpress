@@ -3,7 +3,7 @@
     hosts: localhost
     connection: local
     vars:  #just incase
-      token: paste_your_token
+      token: paste_token_here
       ip_v4_pub: (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true)
       ip_v4_private: (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true)
       packages_yum: ["yum"]
@@ -35,6 +35,7 @@
       - name: Create a new Droplet
         community.digitalocean.digital_ocean_droplet:
           state: present
+          project: ansible
           name: webserver
           oauth_token: "{{ token }}"
           ssh_keys: "{{ info.data.ssh_key.id }}"
