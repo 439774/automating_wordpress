@@ -2,6 +2,8 @@
   - name: Setting up ansible_server
     hosts: localhost
     connection: local
+    become: yes
+    become_user: ansible
     vars:  #just incase
       token: paste_token_here
       ip_v4_pub: (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true)
@@ -35,10 +37,11 @@
       - name: Create a new Droplet
         community.digitalocean.digital_ocean_droplet:
           state: present
-          project: ansible
+          project_name: Ansible
           name: webserver
           oauth_token: "{{ token }}"
           ssh_keys: "{{ info.data.ssh_key.id }}"
+          project: "Ansible"
           size: s-1vcpu-1gb
           region: nyc1
           image: centos-stream-8-x64
@@ -52,8 +55,6 @@
             {{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address | default('<none>', true) }}
             {{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}
 
-        become: yes
-        become_user: ansible
       - shell: |
           whoami
           cd
