@@ -2,10 +2,8 @@
   - name: Setting up ansible_server
     hosts: localhost
     connection: local
-    become: yes
-    become_user: ansible
     vars:  #just incase
-      token: paste_token_here
+      token: paste_your_token
       ip_v4_pub: (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true)
       ip_v4_private: (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true)
       packages_yum: ["yum"]
@@ -53,6 +51,8 @@
             {{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address | default('<none>', true) }}
             {{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}
 
+        become: yes
+        become_user: ansible
       - shell: |
           whoami
           cd
