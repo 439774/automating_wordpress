@@ -3,10 +3,10 @@
     hosts: localhost
     connection: local
     vars:  #just incase
-      token: paste_your_token_here
-      ip_v4_pub: {{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}
-      ip_v4_private: {{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address) }}
-      main_pc: paste_your_id_rsa.pub_key_here
+      token: paste_token_here
+      ip_v4_pub: "{{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address | default('<none>', true) }}"
+      ip_v4_private: "{{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}"
+      main_pc: paste_id_rsa.pub_here
       packages_yum: ["yum"]
       packages: ["vim", "tree", "curl", "wget", "git"]
     tasks:
@@ -87,4 +87,4 @@
                   dev: # group_name
                     hosts:
                       webserver: # hostname
-                        ansible_host: ip_addr_here
+                        ansible_host: {{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}
