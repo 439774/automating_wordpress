@@ -2,11 +2,12 @@
   - name: Setting up ansible_server
     hosts: localhost
     connection: local
-    vars:  #just incase ignore these
+    vars:  #just incase ignore these # "main_pc" "laptop" are optional they are used to input the id_rsa.pub into authorized keys
       token: paste_token_here
       ip_v4_pub: "{{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address | default('<none>', true) }}"
       ip_v4_private: "{{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}"
       main_pc: paste_id_rsa.pub_here
+      laptop: paste_id_rsa.pub_here
       packages_yum: ["yum"]
       packages: ["vim", "curl", "wget", "git"]
     tasks:
@@ -32,7 +33,7 @@
           ssh_key_bits: 2048
           ssh_key_comment: ansible@ansible-server
       
-      - name: Touch again the same file, but dont change times this makes the task idempotent
+      - name: Make "authorized_keys" with the correct permissions
         file:
           path: /home/ansible/.ssh/authorized_keys
           state: touch
@@ -40,7 +41,7 @@
           owner: ansible
           group: ansible
       
-      - name: "Read a file content and generate it on terminal"
+      - name: "Read a file content and print on terminal"
         shell: "cat /home/ansible/.ssh/id_rsa.pub"
         register: output
       - debug: var=output.stdout_lines
@@ -94,7 +95,9 @@
 
       - blockinfile: 
           path: /home/ansible/.ssh/authorized_keys 
-          block: "{{ main_pc }}"
+          block: |
+            {{ main_pc }}
+            {{ laptop }}
       
       - blockinfile: 
           path: /home/ansible/wordpress/inventory.yaml
@@ -167,12 +170,12 @@
                       - wget
                       - git
                   - name: updating all packages for database
-                    when: ansible_os_family == "Debian"
+                    when: ansible_pkg_mgr == "apt"
                     apt:
                       name: "*"
                       state: latest
                   - name: installing vim,curl,wget,git for databse
-                    when: ansible_os_family == "Debian"
+                    when: ansible_pkg_mgr == "apt"
                     apt:
                       pkg:
                       - vim
