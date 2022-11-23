@@ -155,6 +155,15 @@
                     yum:
                       name: httpd
                       state: latest
-                   
 
-      
+      - blockinfile: 
+          path: /home/ansible/wordpress/apache.yaml
+          block: |
+            ---
+              - name: Setting up ansible_server
+                hosts: webserver
+                tasks:
+                  - name: installing apache
+                    yum:
+                      name: httpd
+                      state: present
