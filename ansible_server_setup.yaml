@@ -6,9 +6,9 @@
       token: paste_token_here
       ip_v4_pub: "{{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address | default('<none>', true) }}"
       ip_v4_private: "{{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}"
-      main_pc: paste_ssh_rsa.pub_here
+      main_pc: paste_id_rsa.pub_here
       packages_yum: ["yum"]
-      packages: ["vim", "tree", "curl", "wget", "git"]
+      packages: ["vim", "curl", "wget", "git"]
     tasks:
       - name: Make sure we have a 'ansible' group
         group:
@@ -82,6 +82,9 @@
           pwd
           mkdir /home/ansible/wordpress && touch /home/ansible/wordpress/inventory.yaml
           touch /home/ansible/wordpress/ping.yaml
+          touch /home/ansible/wordpress/add_user.yaml
+          touch /home/ansible/wordpress/packages.yaml
+          touch /home/ansible/wordpress/apache.yaml
           ls -l
         register: checkpoint
       
@@ -110,7 +113,45 @@
           block: |
             ---
               - name: Setting up ansible_server
-                hosts: all
+                hosts: webserver
                 tasks:
                   - name: Ping
                     ping:
+                     
+      - blockinfile: 
+          path: /home/ansible/wordpress/ping.yaml
+          block: |
+            ---
+              - name: adding user ansible into webserver
+                hosts: webserver
+                tasks:
+                  - name: make sure group ansible is present
+                    group: 
+                      name: ansible
+                      state: present
+
+                  - name: Allow 'ansible' group to have passwordless sudo
+                    lineinfile:
+                      dest: /etc/sudoers
+                      state: present
+                      regexp: '^%ansible'
+                      line: '%ansible ALL=(ALL) NOPASSWD: ALL'
+                      validate: 'visudo -cf %s'
+
+                  - name: adding user ansible into webserver
+                    user:
+                      name: ansible
+                      shell: /bin/bash
+                      group: ansible
+
+      - blockinfile: 
+          path: /home/ansible/wordpress/ping.yaml
+          block: |
+            ---
+              - name: Setting up ansible_server
+                hosts: webserver
+                tasks:
+                  - name: updating all packages
+                    yum:
+                      name: httpd
+                      state: latest
