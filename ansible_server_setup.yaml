@@ -2,7 +2,7 @@
   - name: Setting up ansible_server
     hosts: localhost
     connection: local
-    vars:  #just incase
+    vars:  #just incase ignore these
       token: paste_token_here
       ip_v4_pub: "{{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address | default('<none>', true) }}"
       ip_v4_private: "{{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}"
@@ -56,7 +56,7 @@
       - debug:
           msg: "{{ info.data.ssh_key.id }}"
 
-      - name: Create a new Droplet
+      - name: Creating webserver droplet
         community.digitalocean.digital_ocean_droplet:
           state: present
           name: webserver
@@ -167,3 +167,37 @@
                     yum:
                       name: httpd
                       state: present
+
+      - name: Creating database droplet
+        community.digitalocean.digital_ocean_droplet:
+          state: present
+          name: database
+          oauth_token: "{{ token }}"
+          ssh_keys: "{{ info.data.ssh_key.id }}"
+          size: s-1vcpu-1gb
+          region: nyc1
+          image: ubuntu-20-04-x64
+          project: "Ansible"
+          wait_timeout: 200
+        register: my_ubuntu
+
+      - name: printing 
+        ansible.builtin.debug: 
+          msg: |
+            {{ my_ubuntu.data.droplet.id }}
+            {{ (my_ubuntu.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address | default('<none>', true) }}
+            {{ (my_ubuntu.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}
+
+      - blockinfile: #updating file
+          path: /home/ansible/wordpress/inventory.yaml
+          block: |
+            ---
+              all: # all_target_servers
+                hosts:
+                children:
+                  dev: # group_name
+                    hosts:
+                      webserver: # hostname
+                        ansible_host: {{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}
+                      database: # hostname
+                        ansible_host: {{ (my_ubuntu.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}
