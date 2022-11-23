@@ -119,7 +119,7 @@
                     ping:
                      
       - blockinfile: 
-          path: /home/ansible/wordpress/ping.yaml
+          path: /home/ansible/wordpress/add_user.yaml
           block: |
             ---
               - name: adding user ansible into webserver
@@ -145,7 +145,7 @@
                       group: ansible
 
       - blockinfile: 
-          path: /home/ansible/wordpress/ping.yaml
+          path: /home/ansible/wordpress/packages.yaml
           block: |
             ---
               - name: Setting up ansible_server
@@ -155,3 +155,6 @@
                     yum:
                       name: httpd
                       state: latest
+                   
+
+      
