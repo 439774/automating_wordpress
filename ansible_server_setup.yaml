@@ -67,7 +67,6 @@
           pwd
           mkdir /home/ansible/wordpress && touch /home/ansible/wordpress/inventory.yaml
           ls -l
-          cat app/dev_inventory.yaml
         register: checkpoint
       
       - name: checking if things are running smoothly
