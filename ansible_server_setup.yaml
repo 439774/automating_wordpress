@@ -160,7 +160,12 @@
                     when: ansible_os_family == "RedHat"
                     yum:
                       name: "{{ packages }}"
-                      state: present
+                    vars:
+                      packages:
+                      - vim
+                      - curl
+                      - wget
+                      - git
                   - name: updating all packages for database
                     when: ansible_os_family == "Debian"
                     apt:
@@ -169,8 +174,11 @@
                   - name: installing vim,curl,wget,git for databse
                     when: ansible_os_family == "Debian"
                     apt:
-                      name: "{{ packages }}"
-                      state: present
+                      pkg:
+                      - vim
+                      - curl
+                      - wget
+                      - git
 
       - blockinfile: 
           path: /home/ansible/wordpress/apache.yaml
