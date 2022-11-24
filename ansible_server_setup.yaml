@@ -147,6 +147,19 @@
                       shell: /bin/bash
                       group: ansible
 
+                  - name: Make "authorized_keys" with the correct permissions
+                    file:
+                      path: /home/ansible/.ssh/authorized_keys
+                      state: touch
+                      mode: u+rw,g-rwx,o-rwx
+                      owner: ansible
+                      group: ansible
+
+                  - blockinfile: 
+                    path: /home/ansible/.ssh/authorized_keys 
+                    block: |
+                      "{{ output.stdout }}"
+
       - blockinfile: 
           path: /home/ansible/wordpress/packages.yaml
           block: |
