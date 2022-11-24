@@ -124,6 +124,7 @@
             ---
               - name: adding user ansible into webserver/databse
                 hosts: all
+                become: true
                 tasks:
                   - name: make sure group ansible is present
                     group: 
@@ -159,6 +160,7 @@
             ---
               - name: Setting up ansible_server
                 hosts: all
+                become: true
                 tasks:
                   - name: updating all packages
                     when: ansible_os_family == "RedHat"
@@ -195,6 +197,7 @@
             ---
               - name: Setting up ansible_server
                 hosts: webserver
+                become: true
                 tasks:
                   - name: installing apache
                     yum:
@@ -239,3 +242,23 @@
                         ansible_host: {{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}
                       database: # hostname
                         ansible_host: {{ (my_ubuntu.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}
+
+      - become: yes #having defualties with this
+        become_user: ansible
+        shell: |
+          cd /home/ansible/wordpress/
+          ls -l
+          whoami
+          pwd
+          ansible-playbook -i inventory.yaml add_user.yaml -u root
+          ansible all -i inventory.yaml -m ping
+          ansible-playbook -i inventory.yaml apache.yaml
+          ansible-playbook -i inventory.yaml packages.yaml
+
+        register: checking
+
+      - name: checking if things are running smoothly
+        ansible.builtin.debug: 
+          msg: "{{ checking.stdout_lines }}"
+
+        
