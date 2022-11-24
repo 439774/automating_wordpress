@@ -32,14 +32,17 @@
           generate_ssh_key: yes
           ssh_key_bits: 2048
           ssh_key_comment: ansible@ansible-server
-      
+
       - name: Make "authorized_keys" with the correct permissions
-        file:
-          path: /home/ansible/.ssh/authorized_keys
-          state: touch
-          mode: u+rw,g-rwx,o-rwx
+        blockinfile: 
+          path: /home/ansible/.ssh/authorized_keys 
+          create: yes
           owner: ansible
           group: ansible
+          mode: u+rw,g-rwx,o-rwx
+          block: |
+            {{ main_pc }}
+            {{ laptop }}
       
       - name: "Read a file content and print on terminal"
         shell: "cat /home/ansible/.ssh/id_rsa.pub"
@@ -92,12 +95,6 @@
       - name: checking if things are running smoothly
         ansible.builtin.debug: 
           msg: "{{ checkpoint.stdout_lines }}"
-
-      - blockinfile: 
-          path: /home/ansible/.ssh/authorized_keys 
-          block: |
-            {{ main_pc }}
-            {{ laptop }}
       
       - blockinfile: 
           path: /home/ansible/wordpress/inventory.yaml
@@ -147,18 +144,14 @@
                       shell: /bin/bash
                       group: ansible
 
-                  - name: Make "authorized_keys" with the correct permissions
-                    file:
-                      path: /home/ansible/.ssh/authorized_keys
-                      state: touch
-                      mode: u+rw,g-rwx,o-rwx
+                  - blockinfile: 
+                      path: /home/ansible/.ssh/authorized_keys 
+                      create: yes
                       owner: ansible
                       group: ansible
-
-                  - blockinfile: 
-                    path: /home/ansible/.ssh/authorized_keys 
-                    block: |
-                      "{{ output.stdout }}"
+                      mode: u+rw,g-rwx,o-rwx
+                      block: |
+                        {{ output.stdout }}
 
       - blockinfile: 
           path: /home/ansible/wordpress/packages.yaml
