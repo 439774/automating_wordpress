@@ -161,7 +161,7 @@
               - name: Setting up ansible_server
                 hosts: all
                 become: yes
-                become_user: ansible
+                become_user: root
                 become_method: sudo
                 tasks:
                   - name: updating all packages
