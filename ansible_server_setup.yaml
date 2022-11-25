@@ -173,10 +173,6 @@
                     when: ansible_os_family == "RedHat"
                     yum:
                       name: {{ packages }}
-                  - name: updating all packages for database
-                    when: ansible_pkg_mgr == "apt"
-                    apt:
-                      upgrade: dist
                   - name: installing vim,curl,wget,git for databse
                     when: ansible_pkg_mgr == "apt"
                     apt:
@@ -254,6 +250,7 @@
           ansible-playbook -i inventory.yaml apache.yaml
           whoami
           ansible webserver -i inventory.yaml -a "systemctl status httpd"
+          ansible-playbook -i inventory.yaml packages.yaml
 
         register: checking
 
