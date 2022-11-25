@@ -170,9 +170,7 @@
                   - name: installing vim,curl,wget,git
                     when: ansible_os_family == "RedHat"
                     yum:
-                      name: "{{ packages }}"
-                    vars:
-                      packages:
+                      name:
                       - vim
                       - curl
                       - wget
@@ -269,5 +267,3 @@
       - name: checking if things are running smoothly
         ansible.builtin.debug: 
           msg: "{{ checking.stdout_lines }}"
-
-        
