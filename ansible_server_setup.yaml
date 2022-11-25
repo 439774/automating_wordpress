@@ -160,7 +160,9 @@
             ---
               - name: Setting up ansible_server
                 hosts: all
-                become: true
+                become: yes
+                become_user: ansible
+                become_method: sudo
                 tasks:
                   - name: updating all packages
                     when: ansible_os_family == "RedHat"
@@ -178,8 +180,7 @@
                   - name: updating all packages for database
                     when: ansible_pkg_mgr == "apt"
                     apt:
-                      name: "*"
-                      state: latest
+                      upgrade: dist
                   - name: installing vim,curl,wget,git for databse
                     when: ansible_pkg_mgr == "apt"
                     apt:
