@@ -172,11 +172,7 @@
                   - name: installing vim,curl,wget,git
                     when: ansible_os_family == "RedHat"
                     yum:
-                      name:
-                      - vim
-                      - curl
-                      - wget
-                      - git
+                      name: {{ packages }}
                   - name: updating all packages for database
                     when: ansible_pkg_mgr == "apt"
                     apt:
@@ -184,11 +180,7 @@
                   - name: installing vim,curl,wget,git for databse
                     when: ansible_pkg_mgr == "apt"
                     apt:
-                      pkg:
-                      - vim
-                      - curl
-                      - wget
-                      - git
+                      pkg: {{ packages }}
 
       - blockinfile: 
           path: /home/ansible/wordpress/apache.yaml
