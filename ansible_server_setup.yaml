@@ -243,8 +243,16 @@
                       database: # hostname
                         ansible_host: {{ (my_ubuntu.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}
 
-      - become: yes #having defualties with this
+      - blockinfile: #updating file
+          path: /etc/ansible/ansible.cfg
+          block: |
+            [defaults]
+            host_key_checking = False
+
+      - become: yes
         become_user: ansible
+        become_method: sudo
+        ignore_errors: true
         shell: |
           cd /home/ansible/wordpress/
           ls -l
@@ -253,7 +261,8 @@
           ansible-playbook -i inventory.yaml add_user.yaml -u root
           ansible all -i inventory.yaml -m ping
           ansible-playbook -i inventory.yaml apache.yaml
-          ansible-playbook -i inventory.yaml packages.yaml
+          whoami
+          ansible webserver -i inventory.yaml -a "systemctl status httpd"
 
         register: checking
 
