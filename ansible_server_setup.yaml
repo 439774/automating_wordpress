@@ -8,8 +8,10 @@
       ip_v4_private: "{{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}"
       main_pc: paste_id_rsa.pub_here
       laptop: paste_id_rsa.pub_here
+      password_for_remote_ansible_users: testing
       packages_yum: ["yum"]
       packages: ["vim", "curl", "wget", "git"]
+      php_extensions: ["php", "php-mysqlnd", "php-fpm", "php-opcache", "php-curl", "php-json", "php-gd", "php-xml", "php-mbstring", "php-zip"]
     tasks:
       - name: Make sure we have a 'ansible' group
         group:
@@ -84,11 +86,7 @@
           whoami
           cd
           pwd
-          mkdir /home/ansible/wordpress && touch /home/ansible/wordpress/inventory.yaml
-          touch /home/ansible/wordpress/ping.yaml
-          touch /home/ansible/wordpress/add_user.yaml
-          touch /home/ansible/wordpress/packages.yaml
-          touch /home/ansible/wordpress/apache.yaml
+          mkdir /home/ansible/wordpress
           ls -l
         register: checkpoint
       
@@ -98,6 +96,7 @@
       
       - blockinfile: 
           path: /home/ansible/wordpress/inventory.yaml
+          create: yes
           block: |
             ---
               all: # all_target_servers
@@ -110,6 +109,7 @@
 
       - blockinfile: 
           path: /home/ansible/wordpress/ping.yaml
+          create: yes
           block: |
             ---
               - name: Setting up ansible_server
@@ -121,6 +121,7 @@
                      
       - blockinfile: 
           path: /home/ansible/wordpress/add_user.yaml
+          create: yes
           block: |
             ---
               - name: adding user ansible into webserver/databse
@@ -143,9 +144,10 @@
                   - name: adding user ansible into webserver
                     user:
                       name: ansible
+                      password: {{ password_for_remote_ansible_users }}
                       shell: /bin/bash
                       group: ansible
-
+                      
                   - blockinfile: 
                       path: /home/ansible/.ssh/authorized_keys 
                       create: yes
@@ -157,6 +159,7 @@
 
       - blockinfile: 
           path: /home/ansible/wordpress/packages.yaml
+          create: yes
           block: |
             ---
               - name: Setting up ansible_server
@@ -178,11 +181,6 @@
                     apt:
                       name: "*"
                       state: fixed
-                  - name: Update Packages on database
-                    when: ansible_facts["pkg_mgr"] == "apt"
-                    apt:
-                      name: "*"
-                      state: latest
                   - name: installing vim,curl,wget,git for databse
                     when: ansible_pkg_mgr == "apt"
                     apt:
@@ -191,6 +189,7 @@
 
       - blockinfile: 
           path: /home/ansible/wordpress/apache.yaml
+          create: yes
           block: |
             ---
               - name: Setting up ansible_server
@@ -209,6 +208,42 @@
                   - name: starting and enabling apache
                     service:
 
+      - blockinfile: 
+          path: /home/ansible/wordpress/wp_requirments_frontend.yaml
+          create: yes
+          block: |
+            ---
+              - name: Setting up ansible_server
+                hosts: webserver
+                become: yes
+                tasks:
+                  - name: installing required packages
+                    shell: |
+                      dnf install https://rpms.remirepo.net/enterprise/remi-release-8.rpm -y
+                      dnf module reset php -y
+                      dnf module install php:remi-8.0 -y
+                  - name: installing php packages
+                    dnf:
+                      name: {{ php_extensions }}
+                      state: present
+                  - shell: php -v
+                  - name: Downloading tar.gz in html
+                    get_url:
+                      url: https://wordpress.org/latest.tar.gz
+                      dest: /var/www/html
+                  - shell: |
+                      cd /var/www/html/
+                      sudo tar -xvzf wordpress-6.1.1.tar.gz
+                  - shell
+                      cd /var/www/html
+                      mv wordpress/* .
+                  - file: path=/var/www/html/latest.tar.gz state=absent
+                  - file: path=/var/www/html/wordpress state=absent
+                  - name: changing ownership of html and all its childs
+                    file:
+                      path: /var/www/html/
+                      owner: apache
+                      group: apache
       - name: Creating database droplet
         community.digitalocean.digital_ocean_droplet:
           state: present
@@ -249,24 +284,24 @@
             [defaults]
             host_key_checking = False
 
-      - become: yes
-        become_user: ansible
-        become_method: sudo
-        ignore_errors: true
-        shell: |
-          cd /home/ansible/wordpress/
-          ls -l
-          whoami
-          pwd
-          ansible-playbook -i inventory.yaml add_user.yaml -u root
-          ansible all -i inventory.yaml -m ping
-          ansible-playbook -i inventory.yaml apache.yaml
-          whoami
-          ansible webserver -i inventory.yaml -a "systemctl status httpd"
-          ansible-playbook -i inventory.yaml packages.yaml
+      # - become: yes
+      #   become_user: ansible
+      #   become_method: sudo
+      #   ignore_errors: true
+      #   shell: |
+      #     cd /home/ansible/wordpress/
+      #     ls -l
+      #     whoami
+      #     pwd
+      #     ansible-playbook -i inventory.yaml add_user.yaml -u root
+      #     ansible all -i inventory.yaml -m ping
+      #     ansible-playbook -i inventory.yaml apache.yaml
+      #     whoami
+      #     ansible webserver -i inventory.yaml -a "systemctl status httpd"
+      #     ansible-playbook -i inventory.yaml packages.yaml
 
-        register: checking
+      #   register: checking
 
-      - name: checking if things are running smoothly
-        ansible.builtin.debug: 
-          msg: "{{ checking.stdout_lines }}"
+      # - name: checking if things are running smoothly
+      #   ansible.builtin.debug: 
+      #     msg: "{{ checking.stdout_lines }}"
