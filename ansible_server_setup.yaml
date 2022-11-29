@@ -113,6 +113,7 @@
           block: |
             ---
               - name: Setting up ansible_server
+                become: yes
                 hosts: all
                 tasks:
                   - name: Ping
@@ -124,7 +125,7 @@
             ---
               - name: adding user ansible into webserver/databse
                 hosts: all
-                become: true
+                become: yes
                 tasks:
                   - name: make sure group ansible is present
                     group: 
@@ -161,22 +162,32 @@
               - name: Setting up ansible_server
                 hosts: all
                 become: yes
-                become_user: root
-                become_method: sudo
                 tasks:
                   - name: updating all packages
                     when: ansible_os_family == "RedHat"
-                    yum:
+                    dnf:
                       name: "*"
                       state: latest
                   - name: installing vim,curl,wget,git
                     when: ansible_os_family == "RedHat"
-                    yum:
+                    dnf: 
                       name: {{ packages }}
+                      state: present
+                  - name: fixing broken packages
+                    when: ansible_facts["pkg_mgr"] == "apt"
+                    apt:
+                      name: "*"
+                      state: fixed
+                  - name: Update Packages on database
+                    when: ansible_facts["pkg_mgr"] == "apt"
+                    apt:
+                      name: "*"
+                      state: latest
                   - name: installing vim,curl,wget,git for databse
                     when: ansible_pkg_mgr == "apt"
                     apt:
-                      pkg: {{ packages }}
+                      name: {{ packages }}
+                      state: present
 
       - blockinfile: 
           path: /home/ansible/wordpress/apache.yaml
@@ -184,10 +195,10 @@
             ---
               - name: Setting up ansible_server
                 hosts: webserver
-                become: true
+                become: yes
                 tasks:
                   - name: installing apache
-                    yum:
+                    dnf:
                       name: httpd
                       state: present
                   - name: starting and enabling apache
@@ -195,6 +206,8 @@
                       name: httpd
                       state: started
                       enabled: yes
+                  - name: starting and enabling apache
+                    service:
 
       - name: Creating database droplet
         community.digitalocean.digital_ocean_droplet:
