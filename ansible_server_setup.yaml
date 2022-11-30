@@ -141,7 +141,7 @@
                       line: '%ansible ALL=(ALL) NOPASSWD: ALL'
                       validate: 'visudo -cf %s'
 
-                  - name: adding user ansible into webserver
+                  - name: adding user ansible
                     user:
                       name: ansible
                       password: {{ password_for_remote_ansible_users }}
@@ -216,6 +216,7 @@
               - name: Setting up ansible_server
                 hosts: webserver
                 become: yes
+                ignore_errors: yes
                 tasks:
                   - name: installing required packages
                     shell: |
@@ -234,16 +235,21 @@
                   - shell: |
                       cd /var/www/html/
                       sudo tar -xvzf wordpress-6.1.1.tar.gz
-                  - shell
-                      cd /var/www/html
+                  - shell: |
+                      cd /var/www/html/
                       mv wordpress/* .
-                  - file: path=/var/www/html/latest.tar.gz state=absent
+                  - file: path=/var/www/html/wordpress-6.1.1.tar.gz state=absent
                   - file: path=/var/www/html/wordpress state=absent
                   - name: changing ownership of html and all its childs
                     file:
                       path: /var/www/html/
+                      recurse: yes
                       owner: apache
                       group: apache
+                  - name: Restart service httpd
+                    service:
+                      name: httpd
+                      state: restarted
       - name: Creating database droplet
         community.digitalocean.digital_ocean_droplet:
           state: present
