@@ -209,47 +209,53 @@
                     service:
 
       - blockinfile: 
-          path: /home/ansible/wordpress/wp_requirments_frontend.yaml
+          path: /home/ansible/wordpress/wp_requirments_backend.yaml
           create: yes
           block: |
             ---
               - name: Setting up ansible_server
-                hosts: webserver
+                hosts: database
                 become: yes
                 ignore_errors: yes
                 tasks:
                   - name: installing required packages
-                    shell: |
-                      dnf install https://rpms.remirepo.net/enterprise/remi-release-8.rpm -y
-                      dnf module reset php -y
-                      dnf module install php:remi-8.0 -y
-                  - name: installing php packages
-                    dnf:
-                      name: {{ php_extensions }}
-                      state: present
-                  - shell: php -v
-                  - name: Downloading tar.gz in html
-                    get_url:
-                      url: https://wordpress.org/latest.tar.gz
-                      dest: /var/www/html
-                  - shell: |
-                      cd /var/www/html/
-                      sudo tar -xvzf wordpress-6.1.1.tar.gz
-                  - shell: |
-                      cd /var/www/html/
-                      mv wordpress/* .
-                  - file: path=/var/www/html/wordpress-6.1.1.tar.gz state=absent
-                  - file: path=/var/www/html/wordpress state=absent
-                  - name: changing ownership of html and all its childs
-                    file:
-                      path: /var/www/html/
-                      recurse: yes
-                      owner: apache
-                      group: apache
-                  - name: Restart service httpd
+                    apt:
+                      pkg: 
+                      - mariadb-server
+                      - mysql
+                  - name: starting mariadb and enabling
                     service:
-                      name: httpd
-                      state: restarted
+                      state: started
+                      enabled: yes
+                      name: mariadb-server
+                  - name: secure mariadb
+                    become: yes
+                    expect:
+                      command: mysql_secure_installation
+                      responses:
+                        'Enter current password for root': ''
+                        'Set root password': 'n'
+                        'Remove anonymous users': 'y'
+                        'Disallow root login remotely': 'y'
+                        'Remove test database': 'y'
+                        'Reload privilege tables now': 'y'
+                      timeout: 1
+                    register: secure_mariadb
+                    failed_when: "'... Failed!' in secure_mariadb.stdout_lines"
+
+                  - name: Create a new database with name 'wordpressdb'
+                    mysql_db:
+                      name: wordpressdb
+                      state: present
+                  
+                  - name: Create database user with name 'bob' and password '12345' with all database privileges
+                    mysql_user:
+                      name: bob
+                      password: 123
+                      host: {{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}
+                      priv: '*.*:ALL,GRANT'
+                      state: present
+
       - name: Creating database droplet
         community.digitalocean.digital_ocean_droplet:
           state: present
@@ -283,6 +289,79 @@
                         ansible_host: {{ (my_droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}
                       database: # hostname
                         ansible_host: {{ (my_ubuntu.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}
+
+      - blockinfile: 
+          path: /home/ansible/wordpress/wp_requirments_frontend.yaml
+          create: yes
+          block: |
+            ---
+              - name: Setting up ansible_server
+                hosts: webserver
+                become: yes
+                ignore_errors: yes
+                tasks:
+                  - name: installing required packages
+                    shell: |
+                      dnf install https://rpms.remirepo.net/enterprise/remi-release-8.rpm -y
+                      dnf module reset php -y
+                      dnf module install php:remi-8.0 -y
+                      dnf install mysql
+                  - name: installing php packages
+                    dnf:
+                      name: {{ php_extensions }}
+                      state: present
+                  - shell: php -v
+                  - name: Downloading tar.gz in html
+                    get_url:
+                      url: https://wordpress.org/latest.tar.gz
+                      dest: /var/www/html
+                  - shell: |
+                      cd /var/www/html/
+                      sudo tar -xvzf wordpress-6.1.1.tar.gz
+                  - shell: |
+                      cd /var/www/html/
+                      mv wordpress/* .
+                  - file: path=/var/www/html/wordpress-6.1.1.tar.gz state=absent
+                  - file: path=/var/www/html/wordpress state=absent
+                  - name: changing ownership of html and all its childs
+                    file:
+                      path: /var/www/html/
+                      recurse: yes
+                      owner: apache
+                      group: apache
+                  - name: Restart service httpd
+                    service:
+                      name: httpd
+                      state: restarted
+                  - shell: |
+                      cp wp-config-sample.php wp-config.php
+                  - file:
+                      path: /var/www/html/wp-config.php
+                      owner: apache
+                      group: apache
+                  - lineinfile:
+                      dest: /var/www/html/wp-config.php
+                      regexp: '^\$database_name_here='
+                      line: '$database_name_here="wordpressdb"'
+                      state: present
+                  - lineinfile:
+                      dest: /var/www/html/wp-config.php
+                      regexp: '^\$username_here='
+                      line: '$username_here="bob"'
+                      state: present
+                  - lineinfile:
+                      dest: /var/www/html/wp-config.php
+                      regexp: '^\$password_here='
+                      line: '$password_here=""'
+                      state: present
+                  - lineinfile:
+                      dest: /var/www/html/wp-config.php
+                      regexp: '^\$localhost='
+                      line: '$localhost="{{ (my_ubuntu.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('<none>', true) }}"'
+                      state: present
+                  - name: Disable SELinux
+                    selinux:
+                      state: disabled
 
       - blockinfile: #updating file
           path: /etc/ansible/ansible.cfg
